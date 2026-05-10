@@ -124,7 +124,20 @@
   @media(max-width:1000px){.sandbox-shell{grid-template-columns:1fr}}
 
   .stage{background:var(--paper);border:1px solid var(--rule);display:flex;flex-direction:column;min-width:0}
-  .stage .map-area{padding:18px 24px 6px;display:flex;flex-direction:column}
+  .stage .map-area{padding:18px 24px 6px;display:flex;flex-direction:column;position:relative}
+
+  /* Event banner — slim pill at the bottom of the 2×2 during scenario play */
+  .event-popup{position:absolute;bottom:62px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--ink);color:var(--paper);padding:8px 18px;border-left:3px solid var(--accent);max-width:580px;opacity:0;pointer-events:none;transition:opacity .3s ease, transform .3s ease;z-index:8;box-shadow:0 8px 24px -12px rgba(0,0,0,.35);display:flex;align-items:center;gap:14px;white-space:nowrap}
+  .event-popup.visible{opacity:1;transform:translateX(-50%) translateY(0)}
+  .event-popup .ep-meta{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;color:#c8b9a3;text-transform:uppercase;font-weight:600;flex-shrink:0}
+  .event-popup .ep-title{font-family:'Fraunces',serif;font-weight:500;font-size:14.5px;line-height:1.2;letter-spacing:-.005em;color:var(--paper)}
+
+  /* Timeline collapse toggle */
+  .tl-toggle{background:none;border:none;cursor:pointer;color:var(--mute);font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;font-weight:600;padding:3px 8px;margin-left:10px;text-transform:uppercase;transition:color .14s ease}
+  .tl-toggle:hover{color:var(--accent)}
+  .stage .timeline-area.collapsed{padding-bottom:14px}
+  .stage .timeline-area.collapsed #timeline-svg{display:none}
+  .stage .connector.tl-hidden{display:none}
   .stage .map-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;flex-wrap:wrap;gap:8px}
   .stage .map-head .label{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:600}
   .stage .map-head .axis-name{font-family:'Fraunces',serif;font-style:italic;font-size:14px;color:var(--ink-soft)}
@@ -157,8 +170,10 @@
   .scn-btn.playing{background:var(--accent);color:var(--paper);border-color:var(--accent)}
   .scn-btn .scn-tag{font-family:'JetBrains Mono',monospace;font-style:normal;font-size:9.5px;letter-spacing:.12em;color:var(--mute);display:block;margin-bottom:1px;text-transform:uppercase}
   .scn-btn:hover .scn-tag,.scn-btn.playing .scn-tag{color:rgba(255,255,255,.6)}
-  .reset-btn{margin-top:10px;background:transparent;border:1px solid var(--rule);color:var(--ink-soft);padding:7px 12px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;width:100%}
-  .reset-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .reset-btn{background:transparent;border:1px solid var(--rule);color:var(--ink-soft);padding:8px 12px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;transition:all .14s ease}
+  .reset-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+  .reset-btn:disabled{opacity:.4;cursor:not-allowed}
+  #next-btn:not(:disabled):hover{background:var(--accent);color:var(--paper)}
   .status-bar{font-family:'Fraunces',serif;font-style:italic;font-size:13px;color:var(--ink-soft);min-height:18px;line-height:1.4;margin-top:12px;padding-top:10px;border-top:1px solid var(--rule-soft)}
   .status-bar.fired{color:var(--accent)}
 
@@ -213,9 +228,7 @@
   <div class="inner">
     <div class="crumb">CX Outlook · Concept Brief · 2026-05-10</div>
     <div class="links">
-      <a href="#frame">Frame</a>
       <a href="#archetypes">Archetypes</a>
-      <a href="#axes">Axes</a>
       <a href="#events">Events</a>
       <a href="#sandbox">Sandbox</a>
     </div>
@@ -227,8 +240,7 @@
     <div class="eyebrow">Concept brief · CX Strategic Outlook 2026 · for the manager brainstorm</div>
     <h1>Strategic scenario sandbox <span class="it">— archetypes that move when the market does.</span></h1>
     <div class="deck">
-      <p>Rather than a static deck, the centerpiece of the outlook is a <b>strategic scenario sandbox</b>: a 2×2 archetype map sitting above a timeline of named events, where each event repositions the archetypes via author-defined impact rules.</p>
-      <p>Read the framing first — five archetypes, the axis options, the event taxonomy. The interactive demo at the bottom shows what the concept looks like in motion.</p>
+      <p>A <b>2×2 archetype map</b> sitting above a timeline of named events. Each event repositions the archetypes via author-defined rules. Read the archetypes and the event taxonomy below, then press a scenario in the sandbox to watch the map morph.</p>
     </div>
     <div class="meta">
       <div><span>Horizon</span><b>May 2026 → end-2028</b></div>
@@ -239,192 +251,85 @@
   </div>
 </header>
 
-<!-- 01 FRAME -->
-<section id="frame">
-  <div class="wrap-narrow">
-    <div class="label"><span class="num">01</span> Frame the meeting</div>
-    <h2>What we're trying to leave aligned on.</h2>
-    <p class="lede">This is a concept-design brainstorm, not a presentation. We are not asking the manager to approve a deliverable — we are asking for a reaction to a <i>shape</i> for the broader CX strategic-outlook project: how we frame the market, how we let the board feel time pass, and what kind of artifact we ultimately put in front of them.</p>
-    <div class="prose">
-      <p>We want to leave the room aligned on three things only: <b>(1)</b> the right archetype set to reason about, <b>(2)</b> the right pair of axes to organize them, and <b>(3)</b> whether the strategic scenario sandbox is the right centerpiece for the outlook. Everything else is downstream.</p>
-      <p>The horizon is end-2028 — about thirty months out. Far enough to let structural shifts play through; near enough to stay disciplined about which named events actually matter. Anything past 2028 stops being strategy and starts being futurism.</p>
-      <p>The board audience is educational, not decision-forcing. Success is measured in <b>mental-model change at thirty days</b>, not a recommendation the directors sign off on. A static 2×2 freezes the mental model on the day we draw it; a sandbox lets directors feel which futures we believe are possible and why.</p>
-    </div>
-  </div>
-</section>
-
-<!-- 02 ARCHETYPES -->
+<!-- 01 ARCHETYPES -->
 <section id="archetypes">
   <div class="wrap">
-    <div class="label"><span class="num">02</span> The archetype set</div>
+    <div class="label"><span class="num">01</span> The archetype set</div>
     <h2>Five archetypes, locked.</h2>
-    <p class="lede">The competitive map collapses to five structurally distinct positions. CPaaS and BPOs sit explicitly <i>off</i> the 2×2 — they appear in the broader narrative as infrastructure and delivery layers below the map, not peer archetypes.</p>
+    <p class="lede">The competitive map collapses to five structurally distinct positions. CPaaS and BPOs sit <i>off</i> the 2×2 — infrastructure and delivery layers, not peer archetypes.</p>
 
     <div class="arche-grid">
       <div class="arche foundational">
-        <div class="anum">Archetype 01</div>
         <h3>Foundational AI</h3>
         <div class="vendors">OpenAI · Anthropic · Google Gemini</div>
-        <p>Foundation models + agent runtime as platform; selectively ship reference apps; own the "front door" via consumer + Workspace surface. Captures upside via per-token revenue and selective vertical entry.</p>
+        <p>Models + agent runtime as platform. Selective reference apps, "front door" via consumer + Workspace surface.</p>
       </div>
       <div class="arche ainative">
-        <div class="anum">Archetype 02</div>
-        <h3>AI-native agents</h3>
+        <h3>AI-native</h3>
         <div class="vendors">Sierra · Decagon</div>
-        <p>Autonomous-resolution agents priced on outcome / consumption. Design-language differentiation (Sierra Agent OS, Decagon AOPs); model-agnostic on top of foundational LLMs; high-touch implementation in regulated verticals.</p>
+        <p>Autonomous-resolution agents priced on outcome / consumption. Model-agnostic; design-language differentiation; high-touch in regulated verticals.</p>
       </div>
       <div class="arche hyperscaler">
-        <div class="anum">Archetype 03</div>
         <h3>Hyperscalers</h3>
         <div class="vendors">AWS · Microsoft</div>
-        <p>Consumption-priced contact-center on cloud infrastructure with first-party LLM (Q, Gemini) and bring-your-own-CRM. Microsoft folds here rather than into workflow platforms — hyperscaler infra and the Azure-AI-Foundry hedge are the anchor.</p>
+        <p>Consumption-priced contact-center on cloud infra with first-party LLM (Q, Gemini). Microsoft folds here — hyperscaler infra and Azure AI Foundry are the anchor.</p>
       </div>
       <div class="arche ccaas">
-        <div class="anum">Archetype 04</div>
         <h3>Pure-play CCaaS</h3>
         <div class="vendors">NICE · Genesys</div>
-        <p>Cloud contact-center suites (routing, omnichannel, WFM, QM, agent AI) sold to enterprises. Per-seat shifting to consumption + AI add-on pricing; own orchestration, rent voice from CPaaS. Betting on outcome pricing + vertical AI.</p>
+        <p>Cloud contact-center suites — routing, omnichannel, WFM, QM, agent AI. Own orchestration, rent voice. Betting on outcome pricing + vertical AI.</p>
       </div>
       <div class="arche workflow">
-        <div class="anum">Archetype 05</div>
-        <h3>Workflow platforms</h3>
+        <h3>System of record / workflow platforms</h3>
         <div class="vendors">Salesforce · ServiceNow</div>
-        <p>CRM and workflow as the system of record + system of action, with contact center bundled as add-on (Service Cloud, Customer Service, Now Platform). Consumption-credit pricing — Flex Credits in Salesforce's case.</p>
-      </div>
-    </div>
-
-    <div class="flagged">
-      <h4>Three flagged additions for the brainstorm to react to.</h4>
-      <div class="sub">Not in the v1 set, but worth raising before we lock.</div>
-
-      <div class="row">
-        <div class="name">Open-source / sovereign AI<span class="vendor">Llama · Mistral · DeepSeek · sovereign deployments</span></div>
-        <p>Real if the EU AI Act and data-residency dynamics push enterprises off US frontier models. Could justify a sixth archetype if the brainstorm believes sovereignty pressure is structural rather than cyclical.</p>
-      </div>
-      <div class="row">
-        <div class="name">Vertical-AI specialists<span class="vendor">Hippocratic · Kasisto · Abridge</span></div>
-        <p>If "vertical depth wins" is one of the futures we want to pressure-test, this is the archetype that carries the thesis. Healthcare, banking, clinical documentation each have credible specialist leaders.</p>
-      </div>
-      <div class="row">
-        <div class="name">Customer-side in-house AI<span class="vendor">Goldman Sachs · JPMorgan · enterprise internal teams</span></div>
-        <p>Doesn't move any vendor on the map — it <b>removes demand</b> from every vendor category at once. Worth flagging as the structural-break pressure rather than a competitive position.</p>
+        <p>CRM and workflow as the system of action, contact center bundled as add-on. Consumption-credit pricing — Flex Credits in Salesforce's case.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- 03 AXES -->
-<section id="axes">
-  <div class="wrap-narrow">
-    <div class="label"><span class="num">03</span> Axis options</div>
-    <h2>Two pairs to bring to the brainstorm; one to flag as rejected.</h2>
-    <p class="lede">The 2×2 is a <i>thinking</i> frame, not a <i>deliverable</i> frame. We bring the recommended axes plus one workshopping alternative; the manager picks the one that feels right when projected on the wall.</p>
-
-    <div class="axis-block primary">
-      <div class="atag">Primary recommendation</div>
-      <h4>Workflow ownership × AI execution depth.</h4>
-      <p>Strategic-groups classic. The cleanest map for the events we'd actually script — Salesforce-acquires-Genesys moves Salesforce up-right, OpenAI-ships-CS-agent moves OpenAI up, foundational-model-price-collapse compresses the AI-native cluster's margin moat without moving the dot.</p>
-      <div class="quads">
-        <div><b>Top-right</b>"The dream" — empty today</div>
-        <div><b>Top-left</b>AI-natives + Foundational AI</div>
-        <div><b>Bottom-right</b>Legacy CRM positioning</div>
-        <div><b>Bottom-left</b>Infrastructure / delivery</div>
-      </div>
-    </div>
-
-    <div class="axis-block alternate">
-      <div class="atag">Workshopping alternative</div>
-      <h4>Vertical depth × horizontal reach.</h4>
-      <p>Strongest if "vertical AI wins" is a future we want to pressure-test seriously. Useful as a second view of the same archetypes through a different lens — NICE ships an FS bundle (up-right), Hippocratic hits enterprise scale (vertical specialists become a presence on the map at all). Less useful as the primary frame.</p>
-    </div>
-
-    <div class="axis-block rejected">
-      <div class="atag">Considered, rejected</div>
-      <h4>Model layer × application layer.</h4>
-      <p>Application-layer players (Salesforce, NICE, Genesys, Sierra) are not going to develop their own foundational models in the next 24–36 months. Only hyperscalers and Microsoft would actually move on this axis, which makes it visually static and analytically thin over our horizon. Worth mentioning so the manager knows we considered it.</p>
-    </div>
-  </div>
-</section>
-
-<!-- 04 EVENT TAXONOMY -->
+<!-- 02 EVENT TAXONOMY -->
 <section id="events">
   <div class="wrap">
-    <div class="label"><span class="num">04</span> Event taxonomy</div>
-    <h2>Three tiers, ten categories.</h2>
-    <p class="lede">The timeline below the 2×2 isn't undifferentiated. It has structure — discrete events that fire on specific dates, background trends that shade across time, and rare-but-named tail-risk shocks.</p>
+    <div class="label"><span class="num">02</span> Event taxonomy</div>
+    <h2>Three tiers, eleven categories.</h2>
+    <p class="lede">Discrete events that fire on dates · background trends that shade across time · rare-but-named tail-risk shocks.</p>
 
     <div class="tax-grid">
       <div class="tier">
         <div class="tnum">Tier 1 · Discrete</div>
         <h4>Point markers on the timeline.</h4>
-        <div class="tdesc">Dated events that fire and change positioning.</div>
+        <div class="tdesc">Dated events that fire and reposition archetypes.</div>
         <ol>
-          <li><b>M&amp;A / capital events</b> — acquisitions, IPOs, major investments, distressed sales, take-privates.</li>
-          <li><b>Product / strategic releases</b> — specific named products from named vendors.</li>
-          <li><b>Regulatory enforcement</b> — dated regulatory cliffs, federal and state law passages, major court decisions.</li>
+          <li><b>M&amp;A / capital</b> — acquisitions, IPOs, major investments, distressed sales.</li>
+          <li><b>Product releases</b> — named products from named vendors.</li>
+          <li><b>Regulatory cliffs</b> — dated enforcement dates, law passages, major court decisions.</li>
+          <li><b>Strategic partnerships</b> — alliance announcements, co-investments, joint-GTM commitments. <i>The Salesforce + ServiceNow co-investment in Genesys is the canonical example.</i></li>
         </ol>
       </div>
       <div class="tier">
         <div class="tnum">Tier 2 · Background</div>
         <h4>Shaded bands across time.</h4>
-        <div class="tdesc">Trends and conditions that pressure the map continuously.</div>
-        <ol start="4">
-          <li><b>Technology trajectories</b> — bot-to-bot interactions, voice-first UX, agent-native interfaces, multi-modal as default, ambient AI, memory-as-substrate.</li>
+        <div class="tdesc">Continuous pressure on the map.</div>
+        <ol start="5">
+          <li><b>Technology trajectories</b> — bot-to-bot, voice-first UX, multi-modal default, ambient AI.</li>
           <li><b>Pricing model evolution</b> — per-seat → consumption → outcome.</li>
-          <li><b>Talent / labor dynamics</b> — BPO erosion, agent-engineering as a market, AI-talent comp arms race.</li>
-          <li><b>Capital market conditions</b> — rates, IPO windows, valuation cycles, sovereign AI funding.</li>
-          <li><b>Customer behavior shifts</b> — vendor consolidation, AI-native UX preference, outcome-orientation in procurement.</li>
-          <li><b>Geopolitical / sovereignty</b> — US-China decoupling, EU data localization, export controls.</li>
+          <li><b>Talent / labor dynamics</b> — BPO erosion, agent-engineering market.</li>
+          <li><b>Capital market conditions</b> — rates, IPO windows, sovereign AI funding.</li>
+          <li><b>Customer behavior shifts</b> — vendor consolidation, outcome-orientation in procurement.</li>
+          <li><b>Geopolitical / sovereignty</b> — US-China decoupling, EU data localization.</li>
         </ol>
       </div>
       <div class="tier">
         <div class="tnum">Tier 3 · Shock</div>
         <h4>Rare but named.</h4>
-        <div class="tdesc">Tail-risk events that re-price the entire map.</div>
-        <ol start="10">
-          <li><b>Crisis events</b> — foundational-lab safety incident, major AI-driven data breach, high-profile autonomous-agent failure, geopolitical shock.</li>
+        <div class="tdesc">Tail-risk events that re-price the map.</div>
+        <ol start="11">
+          <li><b>Crisis events</b> — foundational-lab safety incident, major AI breach, autonomous-agent failure, geopolitical shock.</li>
         </ol>
         <p style="font-size:12.5px;color:var(--mute);font-style:italic;margin-top:14px;line-height:1.5">
-          The bot-to-bot point in Tier 2 is special: if my bot calls your bot, every CSAT / AHT / containment metric becomes obsolete at once. That doesn't move a dot — it changes what the axes mean. Real design question for v2.
+          Bot-to-bot in Tier 2 is special: if my bot calls your bot, every CSAT / AHT / containment metric becomes obsolete. Doesn't move a dot — changes what the axes mean.
         </p>
-      </div>
-    </div>
-
-    <div class="starter">
-      <h4>Starter event list — 15 candidates, brainstorm narrows to ~10 for the v1 sandbox cut.</h4>
-      <div class="sub">The interactive sandbox below is loaded with twelve of these. The brainstorm decides which make the final cut.</div>
-
-      <div class="group">
-        <div class="gname">M&amp;A · 5 candidates</div>
-        <ul>
-          <li>Salesforce acquires Talkdesk — <b>Q3 2026</b></li>
-          <li>Salesforce acquires Genesys — <b>Q1 2027</b></li>
-          <li>Microsoft acquires Webex CC — <b>mid 2027</b></li>
-          <li>OpenAI acquires Sierra — <b>end 2027</b></li>
-          <li>Zendesk acquires Decagon — <b>Q2 2026</b></li>
-        </ul>
-      </div>
-
-      <div class="group">
-        <div class="gname">Product / strategic releases · 5 candidates</div>
-        <ul>
-          <li>OpenAI ships first-party "OpenAI for Service" — <b>end 2026</b></li>
-          <li>Twilio Conversation Memory hits 30% adoption — <b>Q3 2026</b></li>
-          <li>Anthropic launches "Claude for Service" reference app — <b>Q1 2027</b></li>
-          <li>NICE ships vertical AI bundle for FS — <b>Q4 2026</b></li>
-          <li>AWS Connect outcome-SLA pricing ships — <b>2027</b></li>
-        </ul>
-      </div>
-
-      <div class="group">
-        <div class="gname">Regulatory / macro · 5 candidates</div>
-        <ul>
-          <li>EU AI Act enforced strictly — <b>August 2026</b></li>
-          <li>US federal AI law passes (or doesn't) — <b>mid 2027</b></li>
-          <li>Foundational-model per-token price drops 50% by 2028 — background</li>
-          <li>Voice-infra commoditization — background, ongoing through 2027</li>
-          <li>BPO labor erosion accelerates — background, 2026–2028</li>
-        </ul>
       </div>
     </div>
   </div>
@@ -433,7 +338,7 @@
 <!-- 05 SANDBOX -->
 <section class="sandbox-section" id="sandbox">
   <div class="wrap">
-    <div class="label"><span class="num">05</span> The sandbox — interactive demo</div>
+    <div class="label"><span class="num">03</span> The sandbox — interactive demo</div>
     <h2>Press a scenario. Watch the archetypes move.</h2>
     <p class="lede">This is what the concept looks like in motion. Click <b>Scenario A</b> or <b>Scenario C</b> in the right rail to play a sequenced future. Hover any archetype dot to see its current position and which event most-recently moved it; hover any event to see what it would move and why. <b>Reset</b> returns the map to today.</p>
 
@@ -445,10 +350,14 @@
             <span class="axis-name" id="axis-name">Workflow ownership × AI execution depth</span>
           </div>
           <svg id="map-svg" preserveAspectRatio="xMidYMid meet"></svg>
+          <div class="event-popup" id="event-popup"></div>
         </div>
-        <div class="connector"></div>
-        <div class="timeline-area">
-          <span class="label">Timeline · May 2026 → end-2028 · hover any event</span>
+        <div class="connector" id="tl-connector"></div>
+        <div class="timeline-area" id="timeline-area">
+          <span class="label" style="display:flex;align-items:center">
+            Timeline · May 2026 → end-2028 · hover any event
+            <button class="tl-toggle" id="tl-toggle" type="button">Hide ▾</button>
+          </span>
           <svg id="timeline-svg" preserveAspectRatio="xMidYMid meet"></svg>
         </div>
       </div>
@@ -460,7 +369,10 @@
             <button class="scn-btn" data-scn="A"><span class="scn-tag">Scenario A</span>Bifurcated equilibrium</button>
             <button class="scn-btn" data-scn="C"><span class="scn-tag">Scenario C</span>Foundational labs commoditize</button>
           </div>
-          <button class="reset-btn" id="reset-btn">Reset to today</button>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button class="reset-btn" id="next-btn" style="flex:1;border-color:var(--accent);color:var(--accent)" disabled>Next event ▸</button>
+            <button class="reset-btn" id="reset-btn" style="flex:1">Reset</button>
+          </div>
           <div class="status-bar" id="status">Hover any dot or event to interrogate.</div>
         </div>
 
@@ -968,42 +880,74 @@ function applyEvent(eventId){
 function clamp01(v){ return Math.max(0.02, Math.min(0.98, v)); }
 
 // =========================================================================
-// SCENARIO PLAYER
+// EVENT POPUP (shown on the 2×2 during scenario playback)
 // =========================================================================
-function playScenario(key){
-  if(playing) return;
+const popupEl = document.getElementById('event-popup');
+function showEventPopup(eventId){
+  const e = EVENTS.find(x => x.id === eventId);
+  if(!e) return;
+  popupEl.innerHTML =
+    `<span class="ep-meta">${formatDate(e.date)}</span>
+     <span class="ep-title">${e.label}</span>`;
+  popupEl.classList.add('visible');
+}
+function hideEventPopup(){ popupEl.classList.remove('visible'); }
+
+// =========================================================================
+// SCENARIO PLAYER — step-through, advance via Next button
+// =========================================================================
+let activeScenarioKey = null;
+let scenarioSequence = [];
+let scenarioStep = 0;
+
+function loadScenario(key){
   resetMap(false);
   const scn = SCENARIOS[key];
   if(!scn) return;
-  playing = true;
+  activeScenarioKey = key;
+  scenarioSequence = scn.sequence;
+  scenarioStep = 0;
   const btns = document.querySelectorAll('.scn-btn');
   btns.forEach(b => b.classList.toggle('playing', b.dataset.scn === key));
-  setStatus(`Playing — ${scn.name}: ${scn.summary}`, false);
-  // smooth-scroll the sandbox into view
+  setStatus(`${scn.name} loaded · ${scn.summary} · press "Next event" to advance.`, false);
   document.getElementById('sandbox').scrollIntoView({behavior:'smooth', block:'start'});
+  document.getElementById('next-btn').disabled = false;
+  document.getElementById('next-btn').textContent = `Next event ▸ (1 / ${scenarioSequence.length})`;
+}
 
-  const seq = scn.sequence;
-  let i = 0;
-  const step = () => {
-    if(i >= seq.length){
-      playing = false;
-      btns.forEach(b => b.classList.remove('playing'));
-      setStatus(`Played — ${scn.name}. Press reset to return to today.`, false);
-      return;
-    }
-    applyEvent(seq[i]);
-    renderMap(true);
-    renderAlt();
-    i++;
-    setTimeout(step, 1400);
-  };
-  setTimeout(step, 600);
+function nextStep(){
+  if(activeScenarioKey === null) return;
+  if(scenarioStep >= scenarioSequence.length){ return; }
+  const eventId = scenarioSequence[scenarioStep];
+  showEventPopup(eventId);
+  applyEvent(eventId);
+  renderMap(true);
+  renderAlt();
+  scenarioStep++;
+  const btn = document.getElementById('next-btn');
+  if(scenarioStep >= scenarioSequence.length){
+    btn.disabled = true;
+    btn.textContent = 'Played · reset to replay';
+    setStatus(`Played all events from ${SCENARIOS[activeScenarioKey].name}. Hover dots to interrogate; reset to return to today.`, false);
+  } else {
+    btn.textContent = `Next event ▸ (${scenarioStep+1} / ${scenarioSequence.length})`;
+  }
 }
 
 document.querySelectorAll('.scn-btn').forEach(b => {
-  b.addEventListener('click', () => playScenario(b.dataset.scn));
+  b.addEventListener('click', () => loadScenario(b.dataset.scn));
 });
-document.getElementById('reset-btn').addEventListener('click', () => resetMap(true));
+document.getElementById('next-btn').addEventListener('click', nextStep);
+document.getElementById('reset-btn').addEventListener('click', () => {
+  resetMap(true);
+  activeScenarioKey = null;
+  scenarioSequence = [];
+  scenarioStep = 0;
+  document.querySelectorAll('.scn-btn').forEach(b => b.classList.remove('playing'));
+  const btn = document.getElementById('next-btn');
+  btn.disabled = true;
+  btn.textContent = 'Next event ▸';
+});
 
 function resetMap(animate){
   positions = clonePositions(BASE_POS);
@@ -1011,8 +955,21 @@ function resetMap(animate){
   evG.classed('fired', false);
   renderMap(animate);
   renderAlt();
+  hideEventPopup();
   setStatus('Reset to today. Hover any dot or event to interrogate.', false);
 }
+
+// Timeline collapse / expand
+const tlToggleBtn = document.getElementById('tl-toggle');
+const tlArea = document.getElementById('timeline-area');
+const tlConnector = document.getElementById('tl-connector');
+let tlCollapsed = false;
+tlToggleBtn.addEventListener('click', () => {
+  tlCollapsed = !tlCollapsed;
+  tlArea.classList.toggle('collapsed', tlCollapsed);
+  tlConnector.classList.toggle('tl-hidden', tlCollapsed);
+  tlToggleBtn.textContent = tlCollapsed ? 'Show ▸' : 'Hide ▾';
+});
 
 function setStatus(msg, fired){
   const el = document.getElementById('status');
